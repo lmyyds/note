@@ -21,16 +21,29 @@
 
 **配置**
 
+|      配置名称        |              含义              |
+| :-----------------: | :----------------------------: |
+|       target        |  决定了ts编译成es后使用的语      |
+|       module        |       使用的模块化标准          |
+|       outDir        |  设置ts编译后文件存放的路径      |
+|   strictNullChecks  |        更加严格的空类型检查，null, undefined只能赋值给自身 |
+|  moduleResolution   |       设置解析模块的模式       |
+| noImplicitUseStrict/alwaysStrict |  编译结果中不包含"use strict"  |
+|   removeComments    |        编译结果移除注释        |
+|    noEmitOnError    |      错误时不生成编译结果      |
+|   esModuleInterop   |  启用es模块化交互非es模块导出  |
+
 ``` 
 {
     <!-- 配置选项 -->
     "compilerOptions":{
-        "target": "ES05"  //目前默认值  决定了ts编译成es后使用的语法标准  取值如下：
+        "target": "ES5"  //目前默认值  决定了ts编译成es后使用的语法标准  取值如下：
         /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', or 'ESNEXT'. */
         "module":"commonJs"  //默认值  使用的模块化标准  取值如下：
         /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', 'es2020', or 'ESNext'. */
         "outDir": "./dist"  //设置ts编译后文件存放的路径  注意：使用tsc全局编译时生效，单个编译无效 
         "strictNullChecks": true  //更加严格的空类型检查，null和undefined只能赋值给自身
+        "removeComments":true  //是否编译过滤注释
     },
     "include":["./src"],  //设置tsc要编译的ts文件夹路径,默认全局编译
     "files": ["./aa.ts", "./src/tsDemo.ts"]  //设置tsc要编译的文件路径
@@ -312,4 +325,122 @@ function greeter(num: number | string, str: number | string): number | string {
     greeter(1, 1)    //类型检查自动判断函数的返回值为number
     greeter("1", "1")  //类型检查自动判断函数的返回值为string
 
+``` 
+
+## 枚举(扩展类型)
+
+> 扩展类型：类型别名，枚举，接口，类
+> 定义: 枚举通常用于约束某个变量的取值范围。
+
+字面量和联合类型配合使用，也可以达到同样的目标。
+
+如何定义一个枚举：
 ```
+
+enum 枚举名{
+
+    枚举字段1 = 值1,
+    枚举字段2 = 值2,
+    ...
+
+}
+
+``` 
+**字面量类型的问题** 
+
+1. 在类型约束位置，会产生重复代码。可以使用类型别名解决该问题。
+2. **逻辑含义**和**真实的值**产生了混淆，会导致当修改真实值的时候，产生大量的修改。
+
+```
+
+<!-- 使用真实值 -->
+type gender = "男" | "女"; 
+let sex: gender = "男"
+function isSex(type: gender) {
+
+    return type
+
+}
+isSex("男")
+
+``` 
+>缺点：当我们需要去修改gender的值的时候，比如将"男"和"女"x修改成"先生"和"女士"由于之后使用的是真实值("男"|"女"), 而我们修改的也是真实值所有涉及到的所有真实值都需要去修改，这样就需要大量的修改。
+```
+
+<!-- 使用逻辑值 -->
+enum gender {
+
+    <!-- male 是逻辑值  "男" 是真实值 -->
+    "male" = "男",
+    "female" = "女"
+
+}; 
+let sex: gender = gender.male
+function isSex(type: gender) {
+
+    return type
+
+}
+isSex(gender.male)
+```
+
+> 由于使用的是逻辑值，没有使用真实值，如果遇到更改"male"为"男士", 那么只需要修改枚举中的真实值即可
+
+3. 字面量类型不会进入到编译结果。
+
+> **枚举会出现在编译结果中，编译结果中表现为对象**。
+
+**枚举的规则：**
+
+1. 枚举的字段值可以是字符串或数字
+2. 数字枚举的值会自动自增
+3. 被数字枚举约束的变量，可以直接赋值为数字
+4. 数字枚举的编译结果 和 字符串枚举有差异
+
+**注意事项：**
+
+1. 尽量不要在一个枚举中即出现数字又出现字符串
+2. 使用枚举时，尽量使用枚举值，不使用真实值
+
+## 模块化(了解)
+
+|      配置名称       |              含义              |
+| :-----------------: | :----------------------------: |
+|       module        | 设置编译结果中使用的模块化标准 |
+|  moduleResolution   |       设置解析模块的模式       |
+| noImplicitUseStrict |  编译结果中不包含"use strict"  |
+|   removeComments    |        编译结果移除注释        |
+|    noEmitOnError    |      错误时不生成编译结果      |
+|   esModuleInterop   |  启用es模块化交互非es模块导出  |
+
+> 前端领域中的模块化标准：ES6、commonjs、amd、umd、system、esnext
+
+**TS中如何书写模块化语句**
+
+TS中，导入和导出模块，统一使用ES6的模块化标准(尽量使用es6模块化规范，简单！)
+
+**编译结果中的模块化**
+
+TS中的模块化在编译结果中：
+
+* 如果编译结果的模块化标准是ES6： 没有区别
+* 如果编译结果的模块化标准是commonjs：导出的声明会变成exports的属性，默认的导出会变成exports的default属性；
+
+**如何在TS中书写commonjs模块化代码**
+
+导出：export = xxx
+
+导入：import xxx = require("xxx")
+
+**模块解析**
+
+模块解析：应该从什么位置寻找模块
+
+TS中，有两种模块解析策略
+
+* classic：经典
+* node：node解析策略（唯一的变化，是将js替换为ts）
+  + 相对路径 ` `  ` require("./xxx") `  ` `
+  + 非相对模块 ` `  ` require("xxx") `  ` `
+
+## 接口(扩展类型)
