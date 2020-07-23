@@ -8,6 +8,8 @@
 
 ### 优点
 
+---
+
 ## 配置文件
 
 **tsconfig.json**
@@ -77,6 +79,8 @@ npm i -g nodemon
  -e ts(文件后缀名) 监控ts文件
  nodemon --watch src -e ts --exec ts-node src/index.js
 ```
+
+---
 
 ## 约束(类型检查)
 
@@ -326,6 +330,7 @@ function greeter(num: number | string, str: number | string): number | string {
     greeter("1", "1")  //类型检查自动判断函数的返回值为string
 
 ``` 
+---
 
 ## 枚举(扩展类型)
 
@@ -382,8 +387,8 @@ function isSex(type: gender) {
 
 }
 isSex(gender.male)
-```
 
+``` 
 > 由于使用的是逻辑值，没有使用真实值，如果遇到更改"male"为"男士", 那么只需要修改枚举中的真实值即可
 
 3. 字面量类型不会进入到编译结果。
@@ -442,5 +447,612 @@ TS中，有两种模块解析策略
 * node：node解析策略（唯一的变化，是将js替换为ts）
   + 相对路径 ` `  ` require("./xxx") `  ` `
   + 非相对模块 ` `  ` require("xxx") `  ` `
+---
 
 ## 接口(扩展类型)
+
+接口：inteface
+
+> 扩展类型：类型别名、枚举、接口、类
+
+TypeScript的接口：用于约束类、对象、函数的契约（标准）
+
+契约（标准）的形式：
+
+* API文档，弱标准
+* 代码约束，强标准
+
+和类型别名一样，接口，不出现在编译结果中
+
+```
+
+<!-- 声明一个"生物"的接口 -->
+interface  biology{
+
+            name:string,
+            age:number,
+            introduce():string
+
+}
+
+``` 
+
+### 接口继承
+
+可以通过接口之间的继承，实现多种接口的组合
+```
+
+    <!-- 声明一个水果接口 -->
+    interface fruits{
+        name:string, 
+        price:number
+
+    }
+
+    <!-- 声明一个香蕉接口 -->
+    interface banana extends fruits{
+
+        introduce(): string
+
+    }
+
+    <!-- 创建一个香蕉 -->
+
+    let createBanana: banana = {
+
+    name: "香蕉", 
+    price: 1, 
+    introduce() {
+        return "我是香蕉~"
+
+    }
+
+    //不仅需要拥有introduce方法还需要拥有name和price属性，继承自fruits
+
+}
+
+``` 
+* 接口还可以继承类型别名(偶然发现滴~)
+
+```
+
+    <!-- 这是类型别名不是接口 -->
+    type fruits = {
+
+        name: string,
+        price: number
+
+    }
+
+    interface banana extends fruits {
+
+        introduce(): string
+
+    }
+
+    let createBanana: banana = {
+
+        name: "香蕉", 
+        price: 1, 
+        introduce() {
+            return "我是香蕉~"
+
+        }
+
+    }
+
+``` 
+使用类型别名可以实现类似的组合效果，需要通过 ` `  ` & `  ` ` ，它叫做交叉类型
+
+```
+
+    type fruits = {
+
+        name: string,
+        price: number
+
+    }
+
+    <!-- 通过&符号关联,表示banana同时拥有banana和fruits -->
+
+    type banana = {
+
+        introduce(): string
+
+    } & fruits
+
+    let createBanana: banana = {
+
+        name: "香蕉", 
+        price: 1, 
+        introduce() {
+            return "我是香蕉~"
+
+        }
+
+    }
+
+``` 
+它们的区别：
+
+1.  子接口不能覆盖父接口的成员
+
+>类型别名(type)
+```
+
+    type fruits = {
+
+        name: string,
+        price: number
+
+    }
+
+    type banana = {
+
+        introduce(): string,
+
+        name: number  //影响了fruits中的name的类型 
+
+    } & fruits
+
+    let createBanana: banana = {
+
+        name: "123",   // 这里提示name的类型为never
+        price: 1, 
+        introduce() {
+            return "我是香蕉~"
+
+        }
+
+    }
+
+``` 
+>接口(interface)
+
+```
+
+    interface fruits {
+
+        name: string,
+        price: number
+
+    }
+
+    //报错：信息如下
+    //接口“banana”错误扩展接口“fruits”。
+    //属性“name”的类型不兼容。
+    //不能将类型“number”分配给类型“string”。
+
+    interface banana extends fruits {
+
+        introduce(): string, 
+        name: number   
+
+    }
+
+    let createBanana: banana = {
+
+        name: "123", 
+        price: 1, 
+        introduce() {
+            return "我是香蕉~"
+
+        }
+
+    }
+
+``` 
+2.  交叉类型会把相同成员的类型进行交叉
+
+###  readonly
+
+只读修饰符，修饰的目标是只读
+
+只读修饰符不在编译结果中
+
+```
+
+<!-- 声明一个生物的接口 -->
+interface  biology{
+
+   readonly species:"person", //readonly 声明赋值后将无法修改(只读)
+
+            name:string,
+            age:number,
+            introduce():string
+
+            hobby?:string[]   //选传属性 也可以写成hobby:string[] = []
+
+}
+
+``` 
+>声明一个不可变的数组
+```
+
+<!-- 该数组创建后无法修改里面的值，也无法使用改变数组的方法 -->
+let readonlyArr: ReadonlyArray<number> = [1, 2, 3, 4]
+
+``` 
+* **怎么判断是使用const还是readonly**
+* 如果作用于变量使用const
+
+```
+
+const name = "limao"
+
+``` 
+* 如果作用于属性使用readonly
+
+```
+
+class User{
+
+    readonly name = "limao"    
+
+}
+
+``` 
+
+###  类型兼容性
+
+B->A，如果能完成赋值，则B和A类型兼容
+
+鸭子辨型法（子结构辨型法）：目标类型需要某一些特征，赋值的类型只要能满足该特征即可
+
+* 基本类型：完全匹配
+
+* 对象类型：鸭子辨型法（子结构辨型法）
+
+>场景：
+**对象字面量**当我们直接使用对象字面量的方式对对象进行添加属性或者方法的时候,ts会严格根据类型检查我们的对象属性和方法有没有问题
+**变量**当我们使用一个变量，变量里存放一个对象的方式来赋值给指定类型了的值的时候会采用**子结构辨型法**只要赋值的对象中包含了类型约束中的属性和函数的时候就判定当前变量里存放的值就是当前类型约束的值
+```
+
+    interface Duck {
+
+        sound: "嘎嘎嘎",
+        swin(): void
+
+    }
+
+    let person = {
+
+        name: "limao", 
+        age: 18, 
+        sound: "嘎嘎嘎" as "嘎嘎嘎", //断言位"嘎嘎嘎"类型
+        swin() {
+            console.log(this.name + "正在游泳，并发出了" + this.sound + "的声音"); 
+
+        }
+
+    }
+
+    let duck: Duck = person //不报错
+
+``` 
+```
+    <!-- 报错 -->
+    let duck: Duck = {
+
+        name: "limao", 
+        age: 18, 
+        sound: "嘎嘎嘎" as "嘎嘎嘎", //断言位"嘎嘎嘎"类型
+        swin() {
+            console.log(this.name + "正在游泳，并发出了" + this.sound + "的声音"); 
+
+        }
+        
+    }
+```
+
+### 类型断言
+
+当直接使用对象字面量赋值的时候，会进行更加严格的判断
+
+* 写法一
+
+``` 
+    let createBanana: banana = {
+
+        name: "123",
+        price: 1,
+        introduce() {
+            return "我是香蕉~"
+        },
+        color: "yellow"  //由于新增了一个属性ts判断当前对象不是banana类型但其实我知道这就是banana类型
+
+    } as banana  //我们直接断言这就是banana类型通过在末尾跟上 "as 类型"
+
+```
+
+* 写法二
+
+``` 
+    //我们直接断言这就是banana类型通过在开头跟上 "<类型>"
+
+    let createBanana: banana = <banana>{
+
+        name: "123",
+        price: 1,
+        introduce() {
+            return "我是香蕉~"
+        },
+        color: "yellow"  //由于新增了一个属性ts判断当前对象不是banana类型但其实我知道这就是banana类型
+
+    } 
+
+```
+
+### 函数类型
+
+> 一切无比自然
+
+1. **参数**：传递给目标函数的参数可以少，但不可以多
+
+2. **返回值**：要求返回必须返回；不要求返回，你随意
+
+---
+
+## 类(扩展类型)
+
+> 面向对象思想
+
+### 属性
+
+使用属性列表来描述类中的属性
+
+``` 
+    class User {
+        name: string;
+        age: number;
+        constructor(name: string, age: number) {
+            this.name = name;
+            this.age = age;
+        }
+
+        intro() {
+            console.log( `大家好我叫${this.name}今年${this.age}岁啦~~~` )
+        }
+    }
+
+```
+
+### 属性的初始化检查
+
+**tsconfig.json 配置**
+` `  ` strictPropertyInitialization:true 开启类型初始化检查`  ` `
+属性的初始化位置：
+
+1. 构造函数中
+2. 属性默认值
+
+``` 
+    class User {
+        name: string = "limao";
+        age: number;
+        constructor(name: string, age: number = 18) {
+            this.name = name;
+            this.age = age;
+        }
+
+        intro() {
+            console.log( `大家好我叫${this.name}今年${this.age}岁啦~~~` )
+        }
+    }
+
+    new User()  //{ name: 'limao', age: 18 }
+```
+
+**属性可以修饰为可选的**
+
+``` 
+```
+
+**属性可以修饰为只读的**
+>通过关键字readonly将属性修饰成只读属性
+```
+
+    class User {
+
+  readonly  name: string; 
+
+            age: number;
+            constructor(name: string = "limao", age: number = 18) {
+                this.name = name;
+                this.age = age;
+
+            }
+
+            intro() {
+                console.log( `大家好我叫${this.name}今年${this.age}岁啦~~~` )
+
+            }
+
+        }
+
+    new User()  //{ name: 'limao', age: 18 }
+
+``` 
+
+### 使用访问修饰符
+
+访问修饰符可以控制类中的某个成员的访问权限
+
+* public：默认的访问修饰符，公开的，所有的代码均可访问
+* private：私有的，只有在类中可以访问
+* protected：暂时不讲
+
+```
+
+    class User {
+
+            name: string; 
+            age: number;
+            constructor(name: string = "limao", age: number = 18) {
+                this.name = name;
+                this.age = age;
+
+            }
+
+            public intro() {
+                console.log( `大家好我叫${this.name}今年${this.age}岁啦~~~` )
+
+            }
+
+            private secret(){
+                console.log( `其实我已经${this.age+1}岁啦~~` )
+
+            }
+
+        }
+
+   let user =  new User()
+   user.intro(); //大家好我叫limao今年18岁啦~~~
+   user.secret() //error 无法调用该方法 该方法为私有方法，只能在类中调用
+
+``` 
+
+### 属性简写
+
+如果某个属性，通过构造函数的参数传递，并且不做任何处理的赋值给该属性。可以进行简写
+
+```
+
+    class User {
+
+            constructor(public name: string = "limao",public age: number = 18) {
+
+            }
+
+            public intro() {
+                console.log( `大家好我叫${this.name}今年${this.age}岁啦~~~` )
+
+            }
+
+            private secret(){
+                console.log( `其实我已经${this.age+1}岁啦~~` )
+
+            }
+
+        }
+
+``` 
+
+### 访问器
+
+作用：用于控制属性的读取和赋值,避免直接操作属性，通过暴露的指定方法进行操作
+>方法一
+
+```
+
+    class User {
+
+        constructor(public name: string, private _age: number) {
+
+        }
+
+        intro() {
+            console.log( `大家好我叫${this.name}今年${this._age}岁啦~~~` )
+
+        }
+
+        public setAge(age: number) {
+            if (age >= 200) {
+                this._age = 200; 
+
+            }
+
+            else if (age < 0) {
+                this._age = 0; 
+
+            }
+
+            else {
+                this._age = Math.floor(age)
+
+            }
+
+        }
+
+        public getAge() {
+            return this._age; 
+
+        }
+
+    }
+
+``` 
+>方法二 类似vue的计算属性
+
+```
+
+    class User {
+
+        constructor(public name: string, private _age: number) {
+
+        }
+
+        intro() {
+            console.log( `大家好我叫${this.name}今年${this._age}岁啦~~~` )
+
+        }
+
+        <!-- 注意方法名不能和属性名一致否则会进入无限递归，造成栈溢出 -->
+        set age(age: number) {
+            if (age >= 200) {
+                this._age = 200; 
+
+            }
+
+            else if (age < 0) {
+                this._age = 0; 
+
+            }
+
+            else {
+                this._age = Math.floor(age)
+
+            }
+
+        }
+
+        get age() {
+            return this._age; 
+
+        }
+
+    }
+
+    let user = new User("limao", 18); //{ name: 'limao', age: 18 }
+    console.log(user.age = 500)
+    console.log(user)  //{ name: 'limao', age: 200 }
+
+``` 
+
+## 泛型(扩展类型)
+
+> 泛型：是指附属于函数、类、接口、类型别名之上的类型
+
+> 泛型相当于是一个类型变量，在定义时，无法预先知道具体的类型，可以用该变量来代替，只有到调用时，才能确定它的类型
+
+> 很多时候，TS会智能的根据传递的参数，推导出泛型的具体类型
+> 如果无法完成推导，并且又没有传递具体的类型，默认为空对象
+
+* 泛型可以设置默认值
+
+**在函数中使用泛型**
+
+* 在函数名之后写上 ` `  ` <泛型名称> `  ` `
+```
+
+    function concatArray<T>(targetArr: T[], originArr: T[]): T[] {
+
+        return targetArr.concat(originArr);
+
+    }
+
+    concatArray<number>([1, 1, 2], [2, 3])
+
+```
+<!-- **如何在类型别名、接口、类中使用泛型** -->
+<!-- 直接在名称后写上 ` `  ` <泛型名称> `  ` ` -->
