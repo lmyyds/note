@@ -1286,7 +1286,15 @@ B->A，如果能完成赋值，则B和A类型兼容
 <!-- **如何在类型别名、接口、类中使用泛型** -->
 <!-- 直接在名称后写上 ` `  ` <泛型名称> `  ` ` -->
 
-## 类的继承
+### 泛型约束
+
+泛型约束，用于现实泛型的取值
+
+### 多泛型
+
+---
+
+## 类的继承(extends)
 
  **继承的作用**
 
@@ -1303,16 +1311,6 @@ B->A，如果能完成赋值，则B和A类型兼容
 
 如果A继承自B，则A中自动拥有B中的所有成员
 
-```puml
-@startuml
-
-Tank <|-- PlayerTank
-Tank <|-- EnemyTank
-EnemyTank <|-- BossTank
-
-@enduml
-```
-
 **成员的重写**
 
 重写(override)：子类中覆盖父类的成员
@@ -1325,26 +1323,445 @@ EnemyTank <|-- BossTank
 
 super关键字：在子类的方法中，可以使用super关键字读取父类成员
 
+``` 
+enum type {
+    "dog" = "狗",
+    "tiger" = '老虎'
+}
+
+class Animal {
+    constructor(public type: type, public name: string, public age: number) { }
+    sayHello() {
+        console.log( `大家好！` )
+    }
+}
+
+class dog extends Animal {
+
+    constructor(public type: type, public name: string, public age: number) {
+        //当父类的constructor中存在的参数有必填项的时候他的派生类或者说子类中必须执行super并传入
+        //父类中必填项的属性名
+        super(type, name, age)
+        //分别打印   大家好！              大家好！
+        //两种调用打印结果一致，因为子类中不存在sayhello方法，所以在用this调用的时候
+        //会先去子类(自己)身上找没找到就去父类身上找，找到了就执行。super.sayhello则是
+        //表示调用父类身上的方法，会直接去父类身上找
+        console.log(super.sayHello(), this.sayHello())
+    }
+}
+
+```
+
+``` 
+enum type {
+    "dog" = "狗",
+    "tiger" = '老虎'
+}
+
+class Animal {
+    constructor(public type: type, public name?: string, public age?: number) { }
+    sayHello() {
+        console.log( `大家好！` )
+    }
+}
+
+class dog extends Animal {
+
+    constructor(public type: type, public name: string, public age: number) {
+        //由于父类的name和age的值是选传而不是毕传所以super可以不用传入选传的参数
+        super(type)
+        //如果父类中的所有参数都是选传那么则可以不用传入任何参数
+        // super()
+        //分别打印   大家好！              大家好我是子类!
+        //super会直接去找父类的方法找到并执行，this则是先找子类再找父类
+        console.log(super.sayHello(), this.sayHello())
+    }
+
+    sayHello(){
+        console.log( `大家好我是子类!` )
+    }
+}
+
+```
+
 **类型匹配**
 
-鸭子辨型法
+鸭子辨型法(为啥叫这玩意我也不晓得。。。官方点就叫类型匹配)
 
-子类的对象，始终可以赋值给父类
+**子类的对象，始终可以赋值给父类**
+
+> 因为子类中始终包含父类(必填)的属性和方法, 所以子类的对象一定满足父类的类型匹配要求, 注意：此类型匹配只适用于变量赋值给变量不适用于直接字面量赋值，直接字面量赋值会有严格的类型检查
+> 为什么会有这种差异！字面量赋值一定是你自己赋值编写的，ts不允许你犯这种错误所以严格执行类型检查，但是变量考虑到比如你在发起请求的时候，因为请求到的数据会返回除开你使用的属性之外还有许多其他属性，但是这里关系就是你使用的属性一定是返回数据里的属性也就是说返回的数据一定包含你要使用的属性，你要使用的属性又会伴随着类型约束，这里如果采用严格的类型检查则回报错，所以ts很智能的改为了弱类型检查
 
 面向对象中，这种现象，叫做里氏替换原则
 
 如果需要判断一个数据的具体子类类型，可以使用instanceof
+
+``` 
+enum type {
+    "dog" = "狗",
+    "tiger" = '老虎'
+}
+
+enum gender {
+    "male" = "公",
+    "female" = "母"
+}
+
+class Animal {
+    constructor(protected type: type, protected name: string, public age: number) { }
+    sayHello() {
+        console.log( `大家好！` )
+    }
+}
+
+class Dog extends Animal {
+
+    constructor(protected type: type, public name: string, public age: number, public gender: gender) {
+        super(type, name, age)
+    }
+}
+
+let dog = new Dog(type.dog, "来福", 2, gender.male)
+let animal = new Animal(type.tiger, "阿威", 2)
+console.log(dog, animal) //Dog { type: '狗', name: '来福', age: 2, gender: '公' } Animal { type: '老虎', name: '阿威', age: 2 }
+animal = dog
+// dog = animal  报错
+console.log(animal)  //Dog { type: '狗', name: '来福', age: 2, gender: '公' }
+```
+
+**类中遵循这种类型匹配接口中也是一样**
+
+``` 
+interface father {
+    name: string
+    age: number
+
+}
+interface son extends father {
+    sayHello: () => void
+}
+
+let father: father = {
+    name: "李四",
+    age: 40
+}
+
+let son: son = {
+    name: "王五",
+    age: 10,
+    sayHello() {
+        console.log( `爸,我是从哪里来的!` )
+    }
+}
+//可以正常赋值 变量赋值会遵循类型匹配采用较宽松的类型检查
+let father_: father = son;
+//报错
+let son_: son = father;
+//报错  字面量赋值会有严格的类型检查
+//let father_: father = {
+//    name: "王五",
+//    age: 10,
+//    sayHello() {
+//        console.log( `爸,我是从哪里来的!` )
+//    }
+//}
+
+```
 
 **protected修饰符**
 
 readonly：只读修饰符
 
 访问权限修饰符：private public protected
-
+public: 开放的，都可以访问的
+protected: 私有的，处了类自身其他人都不可以访问
 protected: 受保护的成员，只能在自身和子类中访问
+
+``` 
+enum type {
+    "dog" = "狗",
+    "tiger" = '老虎'
+}
+
+class Animal {
+    constructor(protected type: type, protected name: string, public age: number) { }
+    sayHello() {
+        console.log( `大家好！` )
+    }
+}
+
+class dog extends Animal {
+
+    constructor(protected type: type, public name: string, public age: number) {
+        super(type, name, age)
+    }
+}
+
+let d = new dog(type.dog, "来福", 2)
+
+//报错 无法通过ts的类型检查 因为type属性是protected受保护的成员，只能自身和子类访问
+console.log(d.type)
+
+//可以访问，虽然父类是protected，但是子类重写了该属性的修饰符
+console.log(d.name)
+```
 
 **单根性和传递性**
 
 单根性：每个类最多只能拥有一个父类
 
 传递性：如果A是B的父类，并且B是C的父类，则，可以认为A也是C的父类
+
+---
+
+## 抽象类
+
+### 为什么需要抽象类
+
+``` puml
+@startuml
+
+棋子 <|-- 马
+棋子 <|-- 兵
+棋子 <|-- 炮
+
+@enduml
+```
+
+有时，某个类只表示一个抽象概念，主要用于提取子类共有的成员，而不能直接创建它的对象。该类可以作为抽象类。
+
+给类前面加上 ` `  ` abstract `  ` ` ，表示该类是一个抽象类，不可以创建一个抽象类的对象。
+
+### 抽象成员
+
+父类中，可能知道有些成员是必须存在的，但是不知道该成员的值或实现是什么，因此，需要有一种强约束，让继承该类的子类，必须要实现该成员。
+
+**抽象类中**，可以有抽象成员，这些抽象成员必须在子类中实现
+
+### 设计模式 - 模板模式
+
+设计模式：面对一些常见的功能场景，有一些固定的、经过多年实践的成熟方法，这些方法称之为设计模式。
+
+模板模式：有些方法，所有的子类实现的流程完全一致，只是流程中的某个步骤的具体实现不一致，可以将该方法提取到父类，在父类中完成整个流程的实现，遇到实现不一致的方法时，将该方法做成抽象方法。
+
+---
+
+## 静态成员
+
+### 什么是静态成员
+
+静态成员是指，附着在类上的成员（属于某个构造函数的成员）
+
+使用static修饰的成员，是静态成员
+
+实例成员：对象成员，属于某个类的对象
+
+静态成员：非实例成员，属于某个类
+
+### 静态方法中的this
+
+实例方法中的this指向的是**当前对象**
+
+而静态方法中的this指向的是**当前类**
+
+### 设计模式 - 单例模式
+
+单例模式：某些类的对象，在系统中最多只能有一个，为了避免开发者造成随意创建多个类对象的错误，可以使用单例模式进行强约束。
+
+## 再谈接口
+
+接口用于约束类、对象、函数，是一个类型契约。
+
+> 有一个马戏团，马戏团中有很多动物，包括：狮子、老虎、猴子、狗，这些动物都具有共同的特征：名字、年龄、种类名称，还包含一个共同的方法：打招呼，它们各自有各自的技能，技能是可以通过训练改变的。狮子和老虎能进行火圈表演，猴子能进行平衡表演，狗能进行智慧表演
+
+> 马戏团中有以下常见的技能：
+
+> - 火圈表演：单火圈、双火圈
+> - 平衡表演：独木桥、走钢丝
+> - 智慧表演：算术题、跳舞
+
+不适用接口实现时：
+
+* 对能力（成员函数）没有强约束力
+* 容易将类型和能力耦合在一起
+
+系统中缺少对能力的定义 —— 接口
+
+面向对象领域中的接口的语义：表达了某个类是否拥有某种能力
+
+某个类具有某种能力，其实，就是实现了某种接口
+
+类型保护函数：通过调用该函数，会触发TS的类型保护，该函数必须返回boolean
+
+接口和类型别名的最大区别：接口可以被类实现，而类型别名不可以
+
+> 接口可以继承类，表示该类的所有成员都在接口中。
+
+---
+
+## 索引器
+
+` `  ` 对象[值] `  ` ` ，使用成员表达式
+
+在TS中，默认情况下，不对索引器（成员表达式）做严格的类型检查
+
+使用配置 ` `  ` noImplicitAny `  ` ` 开启对隐式any的检查。
+
+隐式any：TS根据实际情况推导出的any类型
+
+在索引器中，键的类型可以是字符串，也可以是数字
+
+在类中，索引器书写的位置应该是所有成员之前
+
+TS中索引器的作用
+
+* 在严格的检查下，可以实现为类动态增加成员
+* 可以实现动态的操作类成员
+
+在JS中，所有的成员名本质上，都是字符串，如果使用数字作为成员名，会自动转换为字符串。
+
+在TS中，如果某个类中使用了两种类型的索引器，要求两种索引器的值类型必须匹配
+
+---
+
+## this指向约束
+
+https://yehudakatz.com/2011/08/10/understanding-javascript-function-invocation-and-this/
+
+### 在JS中this指向的几种情况
+
+明确：大部分时候，this的指向取决于函数的调用方式
+
+* 如果直接调用函数（全局调用），this指向全局对象或undefined (启用严格模式)
+* 如果使用 ` `  ` 对象. 方法 `  ` ` 调用，this指向对象本身
+* 如果是dom事件的处理函数，this指向事件处理对象
+
+特殊情况：
+
+* 箭头函数，this在函数声明时确定指向，指向函数位置的this
+* 使用bind、apply、call手动绑定this对象
+
+### TS中的this
+
+配置noImplicitThis为true，表示不允许this隐式的指向any
+
+在TS中，允许在书写函数时，手动声明该函数中this的指向，将this作为函数的第一个参数，该参数只用于约束this，并不是真正的参数，也不会出现在编译结果中。
+
+---
+
+## 装饰器
+
+### 概述
+
+> 面向对象的概念（java：注解，c#：特征），decorator
+> angular大量使用，react中也会用到
+> 目前JS支持装饰器，目前处于建议征集的第二阶段
+
+#### 解决的问题
+
+装饰器，能够带来额外的信息量，可以达到分离关注点的目的。
+
+* 信息书写位置的问题
+* 重复代码的问题
+
+上述两个问题产生的根源：某些信息，在定义时，能够附加的信息量有限。
+
+装饰器的作用：为某些属性、类、参数、方法提供元数据信息(metadata)
+
+元数据：描述数据的数据
+
+#### 装饰器的本质
+
+在JS中，装饰器是一个函数。（装饰器是要参与运行的）
+
+装饰器可以修饰：
+
+* 类
+* 成员（属性+方法）
+* 参数
+
+### 类装饰器
+
+类装饰器的本质是一个函数，该函数接收一个参数，表示类本身（构造函数本身）
+
+使用装饰器 ` `  ` @得到一个函数 `  ` `
+在TS中，如何约束一个变量为类
+
+* Function
+* ` `  ` new (参数)=>object `  ` `
+在TS中要使用装饰器，需要开启 ` `  ` experimentalDecorators `  ` `
+装饰器函数的运行时间：在类定义后直接运行
+
+类装饰器可以具有的返回值：
+
+* void：仅运行函数
+* 返回一个新的类：会将新的类替换掉装饰目标
+
+多个装饰器的情况：会按照后加入先调用的顺序进行调用。
+
+### 成员装饰器
+
+* 属性
+
+属性装饰器也是一个函数，该函数需要两个参数：
+
+1. 如果是静态属性，则为类本身；如果是实例属性，则为类的原型；
+2. 固定为一个字符串，表示属性名
+
+* 方法
+
+  
+方法装饰器也是一个函数，该函数需要三个参数：
+
+1. 如果是静态方法，则为类本身；如果是实例方法，则为类的原型；
+2. 固定为一个字符串，表示方法名
+3. 属性描述对象
+
+可以有多个装饰器修饰
+
+---
+
+## 类型演算
+
+> 根据已知的信息，计算出新的类型
+
+### 三个关键字
+
+* typeof
+
+TS中的typeof，书写的位置在类型约束的位置上。
+
+表示：获取某个数据的类型
+
+当typeof作用于类的时候，得到的类型，是该类的构造函数
+
+* keyof
+
+作用于类、接口、类型别名，用于获取其他类型中的所有成员名组成的联合类型
+
+* in
+
+该关键字往往和keyof联用，限制某个索引类型的取值范围。
+
+### TS中预设的类型演算
+
+``` ts
+
+Partial<T>  // 将类型T中的成员变为可选
+
+Required<T>  // 将类型T中的成员变为必填
+
+Readonly<T> // 将类型T中的成员变为只读
+
+Exclude<T, U> // 从T中剔除可以赋值给U的类型。
+
+Extract<T, U> // 提取T中可以赋值给U的类型。
+
+NonNullable<T> // 从T中剔除null和undefined。
+
+ReturnType<T> // 获取函数返回值类型。
+
+InstanceType<T> // 获取构造函数类型的实例类型。
+
+```
