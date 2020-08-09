@@ -503,8 +503,10 @@ interface  biology{
 ```
 
     type User = {
+
     name: string
     age: number
+
     }; 
 
     type SetUser = (name: string, age: number)=> void; 
@@ -1239,6 +1241,46 @@ B->A，如果能完成赋值，则B和A类型兼容
 
     concatArray<number>([1, 1, 2], [2, 3])
 
+``` 
+**如何在类型别名、接口、类中使用泛型**
 ```
-<!-- **如何在类型别名、接口、类中使用泛型** -->
+
+在类型别名中使用泛型
+
+    type callback<T> = (n:T,i:number) => boolean;
+
+    function filter<T>(arr: T[], fn: callback<T>) {
+
+    }
+
+    let arr: string[] = ["1", "1", "2"]
+    filter<string>(arr, n => !n)
+
+``` 
+```
+
+    在接口中使用泛型
+    interface callback<T> {
+
+        (a: T, b: T): boolean
+
+    }
+
+    function filter<T>(arr: T[], fn: callback<T>) {
+
+    }
+
+    let arr: string[] = ["1", "1", "2"]
+    filter<string>(arr, n => !n)
+
+```
+
+``` 
+    在类中使用泛型
+    class ArrayHlper<T> {
+    constructor(private arr: T[]) { }
+    }
+
+```
+
 <!-- 直接在名称后写上 ` `  ` <泛型名称> `  ` ` -->
