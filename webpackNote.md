@@ -5,11 +5,8 @@
 ``` 
 
 npm
-
 npm install webpack webpack-cli
-
 yarn
-
 yarn add webpack webpack-cli
 ```
 
@@ -34,12 +31,10 @@ yarn add webpack webpack-cli
             l:false,
             exports:{}
         }
-
         modules[moduleId].call(module.exports,module,module.exports,__webpack_require__);
         module.l = true;
         return module.exports;
     }
-
     return __webpack_require__("./src/index")
 }({
     "./src/index.js":(function(module,module.__webpack_exports__,__webpack_require__){
@@ -80,7 +75,6 @@ yarn add webpack webpack-cli
 ``` 
 
 module.exports = {
-
     mode:"development",
     devtool:"none"   //关闭源码地图
     devtool:"eval"   //默认值,原理就是使用eval运行模块中的代码
@@ -120,14 +114,12 @@ module.exports = {
 
 写法一:
 entry:"./src/index"  //默认值
-
 写法二:
 多个chunk
 entry:{
     chunkName:"./src/index",
     user:"./src/user"
 }
-
 写法三:
 一个chunk 多个入口
 entry:{
@@ -239,17 +231,14 @@ module.exports = class MyPlugin {
         })
     }
 }
-
 <!-- 引入自定义插件 -->
 const MyPlugin = require("./plugins/myPlugin");
-
 module.exports = {
     mode:"development",
     plugins:[
         new MyPlugin(xxx);
     ]
 }
-
 ```
 
 ---
@@ -284,14 +273,12 @@ module.exports = {
 scripts:{
 "dev":"webpack --env mode=development"
 }
-
 <!-- webpack.config.js -->
 module.exports = (env)=>{
     if(env.mode==="development"){
         <!-- 环境为开发环境 -->
     }
 }
-
 ```
 
 #### --env写法
@@ -304,7 +291,6 @@ module.exports = (env)=>{
 {
     development:true
 }
-
 ```
 
 2. --env mode=development
@@ -315,7 +301,6 @@ module.exports = (env)=>{
 {
     mode:development
 }
-
 ```
 
 **注意mode=development中间不能出现空格，如:mode= development**
@@ -355,7 +340,6 @@ module.exports = {
     target:"web" // 默认值
     target:"node" //node环境  解析fs，path等node内置模块的时候不回去解析依赖
 }
-
 ```
 
 ### module.noParse
@@ -370,7 +354,6 @@ module.exports =  {
         noParse:/a\.js$/  //不对a模块对任何操作，直接将源代码放置到模块内容中
     }
 }
-
 ```
 
 #### resolve.modules
@@ -380,12 +363,10 @@ module.exports =  {
 ``` 
 
 module.exports = {
-
     resolve:{
         modules:["node_modules"]  //默认值
     }
 }
-
 ```
 
 #### resolve.extensions
@@ -399,7 +380,6 @@ module.exports = {
         extensions:[".js",".json"] // 默认值
     }
 }
-
 ```
 
 * 当导入模块没有书写后缀名的时候，更具默认配置[".js", ".json"]先查找.js的文件没有在找.json在没有就找不到模块了
@@ -417,7 +397,6 @@ module.exports = {
         }
     }
 }
-
 ```
 
 #### externals
@@ -598,7 +577,6 @@ module.exports = {
 
 ``` js
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")
-
 module.exports = {
     output: {
         // 解决因为将打包文件放入文件夹后出现的资源引入错误问题
@@ -617,3 +595,117 @@ module.exports = {
     ]
 }
 ```
+
+### babel
+
+> 巴别塔象征统一的国度，统一的语言
+
+#### babel的安装
+
+``` 
+
+@babel/core:babel核心库，提供了编译所需的所有api
+@babel/cli:提供一个命令行工具，调用核心库的api完成编译
+```
+
+#### babel的使用
+
+``` npm
+babel 要编译的文件 -o 编译后的结果
+babel 要编译的整个目录 -d 编译结果放置的目录
+```
+
+#### .babelrc配置文件
+
+``` json
+{
+    "presets":[],  //预设
+    "plugins":[]   //插件
+}
+```
+
+#### babel预设
+
+* @babel/preset-env
+
+> 让你可以使用最新的js语法，而无需针对每种语法设置具体的转换的插件
+
+* 兼容的浏览器
+
+> @babel/preset-env需要根据兼容的浏览器范围来确定如何编译，和postcss一样，可以使用文件.browserslistrc来描述浏览器的兼容范围
+
+```browserslistrc 
+last 3 version
+
+> 1%
+
+not ie <= 8
+
+``` 
+
+* 修改预设默认值
+
+>**useBuiltIns**:false(默认值)  设置成false的时候babel处理js的时候只会编译新的语法，而不会注入新的api,将其设置成**usage**后表示根据api的使用情况，按需导入api
+```json
+{
+    "presets":["@babel/preset-env",{
+        "useBuiltIns":"usage",
+        "corejs": 3   //告诉要使用的corejs的版本默认是2 目前是最新版3
+        // 需要安装开发依赖 npm install core-js
+    }],  //预设
+}
+```
+
+* 补充安装(对@babel/preset-env预设补充)
+1. core-js  提供api
+2. regenerator-runtime 使用async时需要
+
+#### babel插件
+
+* 插件在presets前运行
+* 插件顺序从前往后排列
+* preset顺序是颠倒的(从后往前)
+
+> 通常情况下, @babel/preset-env **只转换**那些已经形成**正式标准**的语法，对于某些处于**早期阶段**还没有确定的语法**不做转换**, 如果要**转换这些语法**, 就要使用**插件**
+
+##### `@babel/plugin-proposal-class-properties`
+
+> 该插件可以让你在类中书写初始化字段
+
+``` js
+class A {
+    a = 1;
+    constructor() {
+        this.b = 3
+    }
+}
+```
+
+##### `@babel/plugin-proposal-optional-chaining`
+
+> 安全性判断语法糖(这不是es规范中的语法糖)，内部实现就是无限三目运算符嵌套
+
+``` js
+const obj = {
+    foo: {
+        bar: {
+            baz: 42
+        }
+    }
+}
+
+const baz = obj?.foo?.bar?.baz; //42
+const safe = obj?.qux?.baz; //undefined
+```
+
+##### `babel-plugin-transform-remove-console`
+
+> 该插件会移出源码中的控制台输出语句
+
+##### `@babel/plugin-transform-runtime`
+
+> 用于提供一些公共的api, 避免转换后多个页面使用相同的代码实现，安装此库可从库中引入一些公共的api
+
+* `需要安装@babel/runtime`
+
+#### babel与webpack结合使用
